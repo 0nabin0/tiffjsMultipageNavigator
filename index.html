@@ -9,7 +9,7 @@
         margin-right: 5px;
      }
      a:hover {
-        background-color: yellow;
+        color: purple;
         cursor: pointer; 
      }
      
@@ -20,56 +20,78 @@
         background: #73AD21;
         padding: 10px;
      }
+     
+     #currPage {
+        width: 35px;
+     }
     </style>
   </head>
   <body >
    <div id = "pagingBar">
         <a id = "next">Next</a>
         <a id = "prev">Prev</a>
-        <div id = "PageNum" style="display: inline-block; margin-left:5px"></div>
+        <div id = "PageNum" style="display: inline-block; margin-left:5px">
+            
+            Page <input type="number" id="currPage" min="1" max="1"> of <span id="pageLen" style="margin-left:5px"></span>
+        </div>
     </div>
     <div id ="tiffLocation"></div>
     
     <script src = "tiff.js"></script>
     <script type="text/javascript">
-        function loadCanvas(tiff, currPage, pageLen) {
-            tiff.setDirectory(currPage-1);
-            var elems = document.getElementsByTagName('canvas');
-            if (elems.length > 0){
-                elems[0].parentNode.removeChild(elems[0]);
-            }          
-            var canvas = tiff.toCanvas();
-            var scaleFactor = document.body.offsetWidth/canvas.width;
-            canvas.setAttribute('style', 'width:' + (canvas.width*scaleFactor) +
-              'px; height: ' + (canvas.height*scaleFactor) + 'px');
-            document.getElementById("tiffLocation").append(canvas);
-            document.getElementById("PageNum").innerHTML = "Page " + currPage + " of " + pageLen;
-        }
-        
-        var xhr = new XMLHttpRequest();
-        xhr.responseType = 'arraybuffer';
-        xhr.open('GET', "multi.tiff");
-        var tiff;
-        var currPage = 1;
-        var pageLen = 1;
-        xhr.onload = function (e) {
-            tiff = new Tiff({buffer: xhr.response});
-            pageLen = tiff.countDirectory();
-            loadCanvas(tiff, currPage, pageLen)
-            document.getElementById('next').onclick = function(){
-                if (currPage < pageLen){
-                    currPage = currPage + 1;
+        function all() {           
+            
+            var currPageEl = document.getElementById("currPage");
+            
+            var xhr = new XMLHttpRequest();
+            xhr.responseType = 'arraybuffer';
+            xhr.open('GET', "multi.tiff");
+            var tiff;
+            var currPage = 1;
+            var pageLen = 1;
+            
+            function loadCanvas(tiff, currPage, pageLen) {
+                tiff.setDirectory(currPage-1);
+                var elems = document.getElementsByTagName('canvas');
+                if (elems.length > 0){
+                    elems[0].parentNode.removeChild(elems[0]);
+                }          
+                var canvas = tiff.toCanvas();
+                var scaleFactor = document.body.offsetWidth/canvas.width;
+                canvas.setAttribute('style', 'width:' + (canvas.width*scaleFactor) +
+                  'px; height: ' + (canvas.height*scaleFactor) + 'px');
+                document.getElementById("tiffLocation").append(canvas);
+                //document.getElementById("PageNum").innerHTML = "Page " + currPage + " of " + pageLen;
+                currPageEl.value = currPage;
+                currPageEl.max = pageLen;
+                document.getElementById("pageLen").innerHTML = pageLen;
+
+            }
+            
+            xhr.onload = function (e) {
+                tiff = new Tiff({buffer: xhr.response});
+                pageLen = tiff.countDirectory();
+                loadCanvas(tiff, currPage, pageLen)
+                document.getElementById('next').onclick = function(){
+                    if (currPage < pageLen){
+                        currPage = currPage + 1;
+                        loadCanvas(tiff, currPage, pageLen);
+                    }
+                };
+                document.getElementById('prev').onclick = function(){
+                    if (currPage > 1){
+                        currPage = currPage - 1;
+                        loadCanvas(tiff, currPage, pageLen);
+                    }
+                };
+                currPageEl.onchange = function() {
+                    currPage = currPageEl.value;
                     loadCanvas(tiff, currPage, pageLen);
                 }
             };
-            document.getElementById('prev').onclick = function(){
-                if (currPage > 1){
-                    currPage = currPage - 1;
-                    loadCanvas(tiff, currPage, pageLen);
-                }
-            };
-        };
-        xhr.send();
+            xhr.send();
+         };
+         all();
     </script>    
 
   </body>
