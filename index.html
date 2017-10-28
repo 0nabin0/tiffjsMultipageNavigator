@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+  <head>
+    <title>tiff.js demo</title>
+    <style>
+     a {
+        font-weight: bold;
+        color : blue;
+        margin-right: 5px;
+     }
+     a:hover {
+        background-color: yellow;
+        cursor: pointer; 
+     }
+     
+     #pagingBar {
+        position: fixed;
+        z-index : 999;
+        border-radius: 25px;
+        background: #73AD21;
+        padding: 10px;
+     }
+    </style>
+  </head>
+  <body >
+   <div id = "pagingBar">
+        <a id = "next">Next</a>
+        <a id = "prev">Prev</a>
+        <div id = "PageNum" style="display: inline-block; margin-left:5px"></div>
+    </div>
+    <div id ="tiffLocation"></div>
+    
+    <script src = "tiff.js"></script>
+    <script type="text/javascript">
+        function loadCanvas(tiff, currPage, pageLen) {
+            tiff.setDirectory(currPage-1);
+            var elems = document.getElementsByTagName('canvas');
+            if (elems.length > 0){
+                elems[0].parentNode.removeChild(elems[0]);
+            }          
+            var canvas = tiff.toCanvas();
+            var scaleFactor = document.body.offsetWidth/canvas.width;
+            canvas.setAttribute('style', 'width:' + (canvas.width*scaleFactor) +
+              'px; height: ' + (canvas.height*scaleFactor) + 'px');
+            document.getElementById("tiffLocation").append(canvas);
+            document.getElementById("PageNum").innerHTML = "Page " + currPage + " of " + pageLen;
+        }
+        
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = 'arraybuffer';
+        xhr.open('GET', "multi.tiff");
+        var tiff;
+        var currPage = 1;
+        var pageLen = 1;
+        xhr.onload = function (e) {
+            tiff = new Tiff({buffer: xhr.response});
+            pageLen = tiff.countDirectory();
+            loadCanvas(tiff, currPage, pageLen)
+            document.getElementById('next').onclick = function(){
+                if (currPage < pageLen){
+                    currPage = currPage + 1;
+                    loadCanvas(tiff, currPage, pageLen);
+                }
+            };
+            document.getElementById('prev').onclick = function(){
+                if (currPage > 1){
+                    currPage = currPage - 1;
+                    loadCanvas(tiff, currPage, pageLen);
+                }
+            };
+        };
+        xhr.send();
+    </script>    
+
+  </body>
+</html>
